@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using PruebaTecnica02FJMAV2.Models;
 
 namespace PruebaTecnica02FJMAV2.Controllers
@@ -47,7 +48,7 @@ namespace PruebaTecnica02FJMAV2.Controllers
         // GET: Celulares/Create
         public IActionResult Create()
         {
-            ViewData["MarcaId"] = new SelectList(_context.Marcas, "MarcaId", "MarcaId");
+            ViewData["MarcaId"] = new SelectList(_context.Marcas, "MarcaId", "Nombre");
             return View();
         }
 
@@ -56,16 +57,26 @@ namespace PruebaTecnica02FJMAV2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("CelularId,Nombre,Precio,Descripcion,Imagen,MarcaId")] Celulare celulare)
+        public async Task<IActionResult> Create([Bind("CelularId,Nombre,Precio,Descripcion,MarcaId")] Celulare celulare, IFormFile imagen)
         {
-            if (ModelState.IsValid)
+            if (imagen != null && imagen.Length > 0)
             {
-                _context.Add(celulare);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                using (var memoryStream = new MemoryStream())
+                {
+                    await imagen.CopyToAsync(memoryStream);
+                    celulare.Imagen = memoryStream.ToArray();
+                }
             }
-            ViewData["MarcaId"] = new SelectList(_context.Marcas, "MarcaId", "MarcaId", celulare.MarcaId);
-            return View(celulare);
+            _context.Add(celulare);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+            //if (ModelState.IsValid)
+            //{
+                
+                
+            //}
+            //ViewData["MarcaId"] = new SelectList(_context.Marcas, "MarcaId", "Nombre", celulare.MarcaId);
+            //return View(celulare);
         }
 
         // GET: Celulares/Edit/5
@@ -81,7 +92,7 @@ namespace PruebaTecnica02FJMAV2.Controllers
             {
                 return NotFound();
             }
-            ViewData["MarcaId"] = new SelectList(_context.Marcas, "MarcaId", "MarcaId", celulare.MarcaId);
+            ViewData["MarcaId"] = new SelectList(_context.Marcas, "MarcaId", "Nombre", celulare.MarcaId);
             return View(celulare);
         }
 
@@ -90,35 +101,57 @@ namespace PruebaTecnica02FJMAV2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CelularId,Nombre,Precio,Descripcion,Imagen,MarcaId")] Celulare celulare)
+        public async Task<IActionResult> Edit(int id, [Bind("CelularId,Nombre,Precio,Descripcion,MarcaId")] Celulare celulare, IFormFile imagen)
         {
             if (id != celulare.CelularId)
             {
                 return NotFound();
             }
-
-            if (ModelState.IsValid)
+            if (imagen != null && imagen.Length > 0)
             {
-                try
+                using (var memoryStream = new MemoryStream())
                 {
-                    _context.Update(celulare);
-                    await _context.SaveChangesAsync();
+                    await imagen.CopyToAsync(memoryStream);
+                    celulare.Imagen = memoryStream.ToArray();
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CelulareExists(celulare.CelularId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                _context.Update(celulare);
+                await _context.SaveChangesAsync();
             }
-            ViewData["MarcaId"] = new SelectList(_context.Marcas, "MarcaId", "MarcaId", celulare.MarcaId);
-            return View(celulare);
+            else
+            {
+                var celularFin = await _context.Celulares.FirstOrDefaultAsync(s=> s.CelularId == celulare.CelularId);
+                if(celularFin?.Imagen?.Length > 0)
+                celulare.Imagen = celularFin.Imagen;
+                celularFin.Nombre = celulare.Nombre;
+                celularFin.Precio = celulare.Precio;
+                celularFin.Descripcion = celulare.Descripcion;
+                celularFin.MarcaId = celulare.MarcaId;
+                _context.Update(celularFin);
+                await _context.SaveChangesAsync();
+            }
+            try
+            {
+                
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CelulareExists(celulare.CelularId))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return RedirectToAction(nameof(Index));
+
+            //if (ModelState.IsValid)
+            //{
+
+            //}
+            //ViewData["MarcaId"] = new SelectList(_context.Marcas, "MarcaId", "Nombre", celulare.MarcaId);
+            //return View(celulare);
         }
 
         // GET: Celulares/Delete/5
@@ -155,6 +188,15 @@ namespace PruebaTecnica02FJMAV2.Controllers
                 _context.Celulares.Remove(celulare);
             }
             
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> DeleteImagen(int? id)
+        {
+            var celularFin = await _context.Celulares.FirstOrDefaultAsync(s => s.CelularId == id);
+            celularFin.Imagen = null;
+            _context.Update(celularFin);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
