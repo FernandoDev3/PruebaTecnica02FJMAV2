@@ -25,7 +25,7 @@
                 @Html.DisplayNameFor(model => model.Imagen)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Marca)
+                @Html.DisplayNameFor(model => model.Marca.Nombre)
             </th>
             <th></th>
         </tr>
@@ -43,15 +43,26 @@
                 @Html.DisplayFor(modelItem => item.Descripcion)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Imagen)
+                    @{
+                        string urlBase64 = "";
+                        if(item.Imagen!=null && item.Imagen.Length > 0)
+                        {
+                            string base64String = Convert.ToBase64String(item.Imagen);
+                            urlBase64 = "data:image/jpeg;base64," + base64String;
+                        }
+
+                        
+                    }
+                    <img src="@urlBase64" width="50px"/>
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Marca.MarcaId)
+                @Html.DisplayFor(modelItem => item.Marca.Nombre)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.CelularId">Edit</a> |
                 <a asp-action="Details" asp-route-id="@item.CelularId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.CelularId">Delete</a>
+                <a asp-action="Delete" asp-route-id="@item.CelularId">Delete</a> |
+                <a asp-action="DeleteImagen" asp-route-id="@item.CelularId">Delete Image</a>
             </td>
         </tr>
 }
