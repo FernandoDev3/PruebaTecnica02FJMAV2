@@ -1,8 +1,13 @@
+using Microsoft.EntityFrameworkCore;
+using PruebaTecnica02FJMAV2.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
+builder.Services.AddDbContext<PruebaTecnica02FJMAV2Context>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("cnn")
+));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
